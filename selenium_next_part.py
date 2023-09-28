@@ -37,7 +37,7 @@ def building_one_object(name_villag: str, max_level: int, build_id: int, build_g
         except:
             time.sleep(50)
             check_login(domen_URL+"/dorf2.php")
-    driver.quit()
+
     print(f'Будування до рівня {max_level} успішно завершено!')
 
 def building_all_object(name_villagе: str, max_level: int, type_object=None):
@@ -80,7 +80,7 @@ def building_all_object(name_villagе: str, max_level: int, type_object=None):
         except NoSuchElementException:
             time.sleep(60)
             check_login(domen_URL+"/dorf1.php")
-    driver.quit()
+
     print(f'Будування до рівня {max_level} успішно завершено!')
 
 def check_villages(driver):
@@ -183,11 +183,13 @@ def requests_do():
 
 if __name__ == '__main__':
     ...
-    building_all_object('1', 3, "Дерево") #Якщо некорекний або взагалі немає типу ресурсного поля то будує всі поля
-    building_all_object('1', 3, "Глина")
-    #building_all_object('1', 2, "Залізо")
-    #building_one_object('1', 4, 1, 1)
-    #building_one_object('1', 4, 5, 2)
+    #building_all_object('1', 3, "Дерево") #Якщо некорекний або взагалі немає типу ресурсного поля то будує всі поля
+    #building_all_object('1', 3, "Глина")
+    #building_all_object('1', 3, "Залізо")
+    building_one_object('1', 5, 1, 1)
+    building_one_object('1', 5, 5, 2)
+    building_one_object('1', 3, 22, 11)
+    driver.quit()
 
 
 
