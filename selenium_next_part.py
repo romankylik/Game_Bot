@@ -183,11 +183,11 @@ def requests_do():
 
 if __name__ == '__main__':
     ...
-    building_all_object('1', 2, "Дерево") #Якщо некорекний або взагалі немає типу ресурсного поля то будує всі поля
-    building_all_object('1', 2, "Глина")
+    building_all_object('1', 3, "Дерево") #Якщо некорекний або взагалі немає типу ресурсного поля то будує всі поля
+    building_all_object('1', 3, "Глина")
     #building_all_object('1', 2, "Залізо")
-    building_one_object('1', 4, 1, 1)
-    building_one_object('1', 4, 5, 2)
+    #building_one_object('1', 4, 1, 1)
+    #building_one_object('1', 4, 5, 2)
 
 
 
