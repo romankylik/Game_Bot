@@ -1,11 +1,16 @@
 import pickle
+import threading
 import time
+from multiprocessing import Process
 
 from selenium.webdriver.common.by import By
 import requests
 from driver_login import *
 
 
+class TR_bot():
+    def __init__(self, domen, browser_profile):
+        self.
 
 driver = get_driver()
 def check_login(URL):
@@ -181,14 +186,26 @@ def requests_do():
 
 
 
+
 if __name__ == '__main__':
     ...
-    #building_all_object('1', 3, "Дерево") #Якщо некорекний або взагалі немає типу ресурсного поля то будує всі поля
-    #building_all_object('1', 3, "Глина")
-    #building_all_object('1', 3, "Залізо")
-    building_one_object('1', 5, 1, 1)
-    building_one_object('1', 5, 5, 2)
-    building_one_object('1', 3, 22, 11)
+
+    building_one_object('1', 5, 26, 15)
+    building_one_object('1', 8, 22, 11)
+    building_one_object('1', 7, 5, 2)
+    building_one_object('1', 7, 1, 1)
+    building_one_object('1', 10, 26, 15)
+    building_all_object('1', 7, "Дерево")
+    building_all_object('1', 7, "Глина")
+
+    #building_all_object('1', 5, "Дерево") #Якщо некорекний або взагалі немає типу ресурсного поля то будує всі поля
+    #building_all_object('1', 5, "Глина")
+    #building_all_object('Third villl', 10, "Зерно")
+
+    ##building_one_object('1', 7, 1, 1)
+    #building_one_object('1', 3, 22, 11)
+
+
     driver.quit()
 
 
