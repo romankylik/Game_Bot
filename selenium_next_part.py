@@ -8,9 +8,8 @@ import requests
 from driver_login import *
 
 
-class TR_bot():
-    def __init__(self, domen, browser_profile):
-        self.
+
+
 
 driver = get_driver()
 def check_login(URL):
@@ -184,26 +183,27 @@ def requests_do():
 
     return page
 
-
+def first():
+    building_one_object('1', 16, 20, 10)  # Склад
+    building_one_object('1', 12, 23, 17)  # Склад
+def second():
+    building_all_object('2', 2)
+    building_all_object('2', 3)
+    building_one_object('2', 7, 21, 11)
+    building_one_object('2', 16, 20, 10)
 
 
 if __name__ == '__main__':
     ...
-
-    building_one_object('1', 5, 26, 15)
-    building_one_object('1', 8, 22, 11)
-    building_one_object('1', 7, 5, 2)
-    building_one_object('1', 7, 1, 1)
-    building_one_object('1', 10, 26, 15)
-    building_all_object('1', 7, "Дерево")
-    building_all_object('1', 7, "Глина")
-
-    #building_all_object('1', 5, "Дерево") #Якщо некорекний або взагалі немає типу ресурсного поля то будує всі поля
-    #building_all_object('1', 5, "Глина")
-    #building_all_object('Third villl', 10, "Зерно")
-
-    ##building_one_object('1', 7, 1, 1)
-    #building_one_object('1', 3, 22, 11)
+    building_all_object('2', 2, "Залізо")
+    building_all_object('2', 5, "Глина")
+    building_all_object('2', 5, "Дерево")
+    building_all_object('2', 2)
+    #building_one_object('1', 12, 20, 10) #Склад
+    #building_one_object('1', 12, 22, 11)  # Комора
+    #building_one_object('1', 12, 26, 15)  # Головна будівля
+    #building_one_object('1', 10, 19, 25)  # Склад
+    #building_all_object('2', 3)  # Якщо некорекний або взагалі немає типу ресурсного поля то будує всі поля
 
 
     driver.quit()
