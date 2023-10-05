@@ -59,6 +59,9 @@ class TravianBot:
             return self.login_in()
 
     def check_villages(self):
+        if 'listEntry' not in self.driver.page_source:
+            self.check_login()
+
         for div in self.driver.find_elements(By.CSS_SELECTOR, 'div.listEntry'):
             self.villages[div.find_element(By.CSS_SELECTOR, 'span.name').text] = div.get_attribute('data-did')
 
@@ -105,33 +108,45 @@ class TravianBot:
                 time.sleep(900)
 
 
-    def building(self, name_villagе: str, object: list[[int, int],]): # [max_level: int, build_gid: int)
-        for
-        if object[1] < 19:
-            self.check_login(self.domen_URL + '/dorf1.php')
-            time.sleep(1)
-        else:
-            self.check_login(self.domen_URL + '/dorf2.php')
-            time.sleep(1)
+    def building(self, objects: dict[str: list[[int, int],]]): # {"name_village":[[max_level: int, build_gid: int],  ])
         # Отримуємо список поселень
         self.check_villages()
-        # Перевірка чи правильно вказана назва поселення користувачем
-        while name_village not in self.villages:
-            name_village = input(f"{self.villages}\n В списку вище не знайдено {name_village}. Повторіть введення: ")
 
-        while True:
-            try:
-                if self.time_to_complete_building():
-                    time.sleep(1)
-                    build_URL = f'{domen_URL}/build.php?id={build_id}&gid={build_gid}'
+        # Перевіряємо чи правильно вказанні назви поселень
+        for name in objects.keys():
+            if name not in self.villages:
+                print(f"{self.villages}\n В списку вище не знайдено {name}.")
 
-                    # Починаємо будівництво/ Якщо функція start_building повертає 'max' значить будівля побудована до рівня max_level
-                    if start_building(driver, build_URL, max_level) == 'max':
-                        break
+
+        for name_village, one_object in objects.items():
+            # Отримуємо список поселень
+            self.check_villages()
+
+
+            for n_object in one_object:
+                if n_object[1] < 19:
+                    self.check_login(self.domen_URL + '/dorf1.php')
                     time.sleep(1)
-            except:
-                time.sleep(50)
-                check_login(domen_URL + "/dorf2.php")
+                else:
+                    self.check_login(self.domen_URL + '/dorf2.php')
+                    time.sleep(1)
+
+                try:
+                    if self.time_to_complete_building():
+                        time.sleep(1)
+                        build_URL = f'{domen_URL}/build.php?id={build_id}&gid={build_gid}'
+
+                        # Починаємо будівництво/ Якщо функція start_building повертає 'max' значить будівля побудована до рівня max_level
+                        if start_building(driver, build_URL, max_level) == 'max':
+                            break
+                        time.sleep(1)
+                except:
+                    time.sleep(50)
+                    check_login(domen_URL + "/dorf2.php")
+
+
+
+
 
 
 

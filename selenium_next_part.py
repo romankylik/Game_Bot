@@ -1,4 +1,5 @@
 import pickle
+import re
 import threading
 import time
 from multiprocessing import Process
@@ -126,7 +127,7 @@ def start_building(driver , URL, lvl=100):
         clic_bild = clic_1.find_element(By.CSS_SELECTOR, '.textButtonV1.green.build')
         time.sleep(2)
         # Перевірка чи будівля не побудована до вказаного рівня
-        if int(clic_bild.text[-1]) > lvl:
+        if int(re.search(r'\d+', clic_bild.text).group()) > lvl:
             print("Будівля побудована до вказаного вами рівня")
             return 'max'
         title = driver.find_element(By.CSS_SELECTOR, '.titleInHeader').text
@@ -195,15 +196,14 @@ def second():
 
 if __name__ == '__main__':
     ...
-    building_all_object('2', 2, "Залізо")
-    building_all_object('2', 5, "Глина")
-    building_all_object('2', 5, "Дерево")
-    building_all_object('2', 2)
-    #building_one_object('1', 12, 20, 10) #Склад
+
+    #building_one_object('1', 10, 24, 22)
+    #building_one_object('1', 10, 21, 36)
+    #building_one_object('1', 10, 26, 15)
     #building_one_object('1', 12, 22, 11)  # Комора
     #building_one_object('1', 12, 26, 15)  # Головна будівля
     #building_one_object('1', 10, 19, 25)  # Склад
-    #building_all_object('2', 3)  # Якщо некорекний або взагалі немає типу ресурсного поля то будує всі поля
+    building_all_object('2', 4, "Зерно")  # Якщо некорекний або взагалі немає типу ресурсного поля то будує всі поля
 
 
     driver.quit()
