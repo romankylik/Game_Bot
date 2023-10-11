@@ -201,9 +201,7 @@ if __name__ == '__main__':
     #building_all_object('2', 8, "Залізо")
     #building_all_object('2', 8, "Зерно")
 
-    building_one_object('3', 10, 26, 15)
-    building_one_object('3', 10, 35, 11)
-    building_one_object('3', 10, 38, 10)
+
     building_all_object('3', 8)
 
     #building_one_object('1', 10, 26, 15)
