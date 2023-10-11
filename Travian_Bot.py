@@ -146,7 +146,7 @@ class TravianBot:
         timer = self.time_to_complete_building()
 
         if not timer:
-            builds = []
+            builds = {}
             for one_object in list_build:
                 if one_object[1] < 5:
                     resource = True
@@ -169,9 +169,9 @@ class TravianBot:
                         for i in all_builds:
                             if i.text != '':
                                 if int(i.text) < one_object[0]:
-                                    builds.append(i)
+                                    builds[i.get_attribute('href')] = [one_object[0], i.text, i.get_attribute("class")]
                             else:
-                                builds.append(i)
+                                builds[i.get_attribute('href')] = [one_object[0], i.text, i.get_attribute("class")]
                     except:
                         print(village_id + ":Вказане помилкове id")
                 else:
@@ -187,8 +187,9 @@ class TravianBot:
 
                     all_builds = self.driver.find_element(By.CSS_SELECTOR, f'div.g{one_object[1]}')
                     # Якщо рівень будівлі нижчий за вказаний користувачем добавляємо в лист будівництва
-                    if int(all_builds.text) < one_object[0]:
-                        builds.append(all_builds.find_element(By.TAG_NAME, 'a'))
+                    if int() < one_object[0]:
+                        el_b = all_builds.find_element(By.TAG_NAME, 'a')
+                        builds[el_b.get_attribute('href')] = [one_object[0], el_b.text, el_b.get_attribute("class")]
 
 
             # Перевірка чи завершені будівн. усіх будівель
@@ -196,19 +197,23 @@ class TravianBot:
                 print(village_id + ": Усе будівництво завершено!")
                 return False
 
-            # Відсортуємо список по рівню будівлі
-            builds = sorted(builds, key=lambda x: x.find_element(By.CLASS_NAME, 'labelLayer').text)
+            # Відсортуємо словник по рівню будівлі та зберігаємо списком
+            list_el = [k for k, v in sorted(builds.items(), key=lambda item: item[1][1])]
 
-            print([i.get_attribute('href') for i in builds])
+
+
 
             # Будування по списку ссилок builds
-            for object_tag in builds:
-                if "good" in object_tag.get_attribute("class"):
+            for object_tag in list_el:
+                if "good" in builds[object_tag][2]:
                     # Починаємо будівництво
-                    title = self.start_building(object_tag.get_attribute('href'), village_id)
+                    title = self.start_building(object_tag, village_id)
                     if title:
                         time.sleep(3)
                         print(f'{village_id}:"{title[:-9]}" побуловано до {int(title[-2:]) + 1} рівня')
+                        # Якщо побудовано до рівня вказаного користувачем тоді видаляємо зі елемент зі словника
+                        if int(title[-2:]) + 1 == builds[object_tag][0]:
+                            builds.pop(object_tag)
                         break
 
             # Після проходж. списку будівництві, все ще не виконується будівн. значить невистачає ресурсів
