@@ -85,17 +85,18 @@ class TravianBot:
         try:
             # Відкриваємо сторінку конкретної будівлі
             self.driver.get(url)
-            time.sleep(1)
+            time.sleep(2)
             # Перевірка чи сторінка будівництва має різні вкладки
             if 'scrollingContainer' in self.driver.page_source:
                 self.driver.find_element(By.CSS_SELECTOR, 'div.favorKey0').click()
-                time.sleep(1)
+                time.sleep(2)
             # Знаходимо кнопку "Побудувати" та клікаємо
             clic_1 = self.driver.find_element(By.CLASS_NAME, 'section1')
             clic_bild = clic_1.find_element(By.CSS_SELECTOR, '.textButtonV1.green.build')
             time.sleep(2)
             title = self.driver.find_element(By.CSS_SELECTOR, '.titleInHeader').text
             clic_bild.click()
+            time.sleep(2)
             return title
 
         except:
@@ -120,7 +121,9 @@ class TravianBot:
             x = self.one_village(name_village, objects[name_village])
             if x:
                 times[name_village] = x
+            time.sleep(3)
         while True:
+            print(times)
             if len(times) == 0:
                 break
             min_key = min(times, key=times.get)
@@ -144,7 +147,6 @@ class TravianBot:
         self.driver.get(f'{main_page}?newdid={village_id}&')
         self.check_login()
         timer = self.time_to_complete_building()
-
         if not timer:
             builds = {}
             for one_object in list_build:
@@ -169,28 +171,25 @@ class TravianBot:
                         for i in all_builds:
                             if i.text != '':
                                 if int(i.text) < one_object[0]:
-                                    builds[i.get_attribute('href')] = [one_object[0], i.text, i.get_attribute("class")]
+                                    builds[i.get_attribute('href')] = [one_object[0], int(i.text), i.get_attribute("class")]
                             else:
-                                builds[i.get_attribute('href')] = [one_object[0], i.text, i.get_attribute("class")]
+                                builds[i.get_attribute('href')] = [one_object[0], int(i.text), i.get_attribute("class")]
                     except:
                         print(village_id + ":Вказане помилкове id")
                 else:
-
                     if 'dorf2' not in self.driver.current_url:
                         self.driver.get(f'{self.domen_URL}/dorf2.php')
                         time.sleep(2)
-                    # Якщо задана будівля "Стіна" тоді обновляємо її атрибути href
-                    if one_object[1] == 33:
-                        el = self.driver.find_element(By.CSS_SELECTOR, 'div.g33').find_element(By.TAG_NAME, 'a')
-                        url_el = 'https://ts30.x3.asia.travian.com/build.php?id=40&gid=33'
-                        self.driver.execute_script('arguments[0].setAttribute("href", arguments[1])', el, url_el)
-
                     all_builds = self.driver.find_element(By.CSS_SELECTOR, f'div.g{one_object[1]}')
+                    el_b = all_builds.find_element(By.TAG_NAME, 'a')
                     # Якщо рівень будівлі нижчий за вказаний користувачем добавляємо в лист будівництва
-                    if int() < one_object[0]:
-                        el_b = all_builds.find_element(By.TAG_NAME, 'a')
-                        builds[el_b.get_attribute('href')] = [one_object[0], el_b.text, el_b.get_attribute("class")]
-
+                    if int(el_b.text) < one_object[0]:
+                        # Як що задана будівля "Стіна" посилання добавляємо вручну
+                        if one_object[1] != 33:
+                            builds[el_b.get_attribute('href')] = [one_object[0], int(el_b.text), el_b.get_attribute("class")]
+                        else:
+                            url_el = 'https://ts30.x3.asia.travian.com/build.php?id=40&gid=33'
+                            builds[url_el] = [one_object[0], int(el_b.text), el_b.get_attribute("class")]
 
             # Перевірка чи завершені будівн. усіх будівель
             if len(builds) == 0:
@@ -198,11 +197,8 @@ class TravianBot:
                 return False
 
             # Відсортуємо словник по рівню будівлі та зберігаємо списком
-            list_el = [k for k, v in sorted(builds.items(), key=lambda item: item[1][1])]
-
-
-
-
+            list_el = sorted(builds.keys(), key=lambda k: builds[k][1])
+            print([builds[i][1] for i in list_el])
             # Будування по списку ссилок builds
             for object_tag in list_el:
                 if "good" in builds[object_tag][2]:
@@ -220,6 +216,8 @@ class TravianBot:
             if not self.time_to_complete_building():
                 print(village_id + ': Немає ресурсів на будівництво жодної будівлі зі списку, очікуємо')
                 return 900
+            else:
+                return int(self.time_to_complete_building())
         else:
             print(f'{village_id}: До завершення будівництва {timer} секунд')
             return int(timer)
@@ -228,8 +226,8 @@ class TravianBot:
 
 if __name__ == '__main__':
     asia = TravianBot('https://ts30.x3.asia.travian.com', get_driver('Firefox_Profile2'))
-    asia.building({'1': [[10, 20], [15, 33], [20, 15]],
-                   '2': [[5, 5], [5, 6], [10, 33]],
+    asia.building({'1': [[10, 20], [20, 15]],
+                   '2': [[9, 2], [10, 1]],
                    '3': [[12, 10], [12, 11], [8, 1], [8, 2]],
                    })
     asia.driver.quit()
