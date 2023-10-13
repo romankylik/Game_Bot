@@ -15,8 +15,6 @@ def get_driver(browser_profile):
     options = Options()
     # Задаємо опцію власного профіля для драйвера
     options.add_argument('-profile')
-    # Додаткова опція не відкривати графічне вікно браузера(робота у фоновому режимі, за бажанням)
-    ##options.add_argument('-headless')
     # Вказуємо шлях до профілю браузера( в цьому випадку він в папці проекту)
     options.add_argument(f'.\\{browser_profile}')
     # -Відкрийте веб-браузер Firefox.
@@ -24,6 +22,9 @@ def get_driver(browser_profile):
     # -Копієюмо папку профілю браузера Firefox в папку проекту, по бажанню можна перейменувати папку
     # -Наприклад, шлях може виглядати схоже на '...\user\AppData\Roaming\Mozilla\Firefox\Profiles\xxxxxxxx.default-release'
     # -Де 'xxxxxxxx.default-release' яку потрібно скопіювати"""
+
+    # Додаткова опція не відкривати графічне вікно браузера(робота у фоновому режимі, за бажанням)
+    options.add_argument('-headless')
     return webdriver.Firefox(options=options)
 
 class TravianBot:
@@ -74,7 +75,11 @@ class TravianBot:
             if 'dorf' not in self.driver.current_url:
                 self.driver.get(f'{self.domen_URL}/dorf1.php')
                 time.sleep(1)
-            tag_bild = self.driver.find_element(By.CLASS_NAME, 'buildDuration').find_element(By.TAG_NAME, 'span')
+            tag_bild = self.driver.find_elements(By.CLASS_NAME, 'buildDuration')
+            if len(tag_bild) == 0:
+                return False
+            # Одночасного будування двох будівель, беремо час останьої
+            tag_bild = tag_bild[-1].find_element(By.TAG_NAME, 'span')
             time.sleep(1)
             time_bild = tag_bild.get_attribute('value')
             return time_bild
@@ -198,7 +203,7 @@ class TravianBot:
 
             # Відсортуємо словник по рівню будівлі та зберігаємо списком
             list_el = sorted(builds.keys(), key=lambda k: builds[k][1])
-            print([builds[i][1] for i in list_el])
+
             # Будування по списку ссилок builds
             for object_tag in list_el:
                 if "good" in builds[object_tag][2]:
@@ -206,7 +211,7 @@ class TravianBot:
                     title = self.start_building(object_tag, village_id)
                     if title:
                         time.sleep(3)
-                        print(f'{village_id}:"{title[:-9]}" побуловано до {int(title[-2:]) + 1} рівня')
+                        print(f'{village_id}:"{title[:-10]}" побуловано до {int(title[-2:]) + 1} рівня')
                         # Якщо побудовано до рівня вказаного користувачем тоді видаляємо зі елемент зі словника
                         if int(title[-2:]) + 1 == builds[object_tag][0]:
                             builds.pop(object_tag)
@@ -226,8 +231,8 @@ class TravianBot:
 
 if __name__ == '__main__':
     asia = TravianBot('https://ts30.x3.asia.travian.com', get_driver('Firefox_Profile2'))
-    asia.building({'1': [[10, 20], [20, 15]],
-                   '2': [[9, 2], [10, 1]],
-                   '3': [[12, 10], [12, 11], [8, 1], [8, 2]],
+    asia.building({'1': [[5, 9], [20, 11]],
+                   '2': [[10, 1], [10, 2], [18, 11], [18, 10]],
+                   '3': [[20, 11], [20, 10], [20, 22], [10, 16]],
                    })
     asia.driver.quit()
