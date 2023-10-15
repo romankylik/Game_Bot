@@ -137,38 +137,47 @@ class TravianBot:
 
 
     def building(self, objects: dict[str: list[[int, int],]]): # {"name_village":[[max_level: int, build_gid: int],  ])
-        self.driver.get(f'{self.domen_URL}/dorf1.php')
-        time.sleep(1)
-        # Отримуємо список поселень
-        self.check_villages()
-        # Перевіряємо чи правильно вказанні назви поселень
-        for name in objects.keys():
-            if name not in self.villages:
-                print(f"{self.villages}\n В списку вище не знайдено {name}.")
-        # Список потоків
-
-        # Запускаємо будування в кожному поселенні циклом
-        times = {}
-        for name_village in objects:
-            x = self.one_village(name_village, objects[name_village])
-            if x:
-                times[name_village] = x
-            time.sleep(3)
-        while True:
-            # У випадку помилки драйвера, наприклад пропав інтернет очікує 5 хв
+        # У випадку помилки драйвера, наприклад пропав інтернет очікує 5 хв та повторює спробу тричі
+        for i in range(3):
             try:
-                print(times)
-                if len(times) == 0:
-                    break
-                min_key = min(times, key=times.get)
-                min_time = times.pop(min_key)
-                sum_time = min_time + randint(3, 20)
-                time.sleep(sum_time)
-                for i in times:
-                    times[i] = times[i] - sum_time
-                y = self.one_village(min_key, objects[min_key])
-                if y:
-                    times[min_key] = y
+                self.driver.get(f'{self.domen_URL}/dorf1.php')
+                time.sleep(1)
+                # Отримуємо список поселень
+                self.check_villages()
+                # Перевіряємо чи правильно вказанні назви поселень
+                for name in objects.keys():
+                    if name not in self.villages:
+                        print(f"{self.villages}\n В списку вище не знайдено {name}.")
+                # Список потоків
+
+                # Запускаємо будування в кожному поселенні циклом
+                times = {}
+
+                for name_village in objects:
+                    x = self.one_village(name_village, objects[name_village])
+                    if x:
+                        times[name_village] = x
+                    time.sleep(3)
+                while True:
+                    print(times)
+                    if len(times) == 0:
+                        break
+                    min_key = min(times, key=times.get)
+                    min_time = times.pop(min_key)
+                    # Запам'ятовуємо поточний час
+                    start_time = time.time()
+                    time.sleep(min_time + randint(3, 20))
+                    # Виконуємо будівництво
+                    y = self.one_village(min_key, objects[min_key])
+                    delta_time = int(time.time() - start_time)
+                    print(f'Час на будівництво + randint(3, 20)= {delta_time} секунд')
+                    # Віднімаємо пройдений час в обєктах які залишились
+                    for i in times:
+                        times[i] = times[i] - delta_time
+                    if y:
+                        times[min_key] = y
+                # Вихід з основного циклу for по закінченню програми, якщо не було жодних помилок
+                break
             except WebDriverException as e:
                 print('Помилка з драйвером')
                 print(e)
@@ -262,7 +271,6 @@ class TravianBot:
                         # Якщо побудовано до рівня вказаного користувачем тоді видаляємо зі елемент зі словника
                         if int(title[-2:]) + 1 == builds[object_tag][0]:
                             builds.pop(object_tag)
-                            return False
                         break
 
             # Після проходж. списку будівництві, все ще не виконується будівн. значить невистачає ресурсів
@@ -281,9 +289,9 @@ class TravianBot:
 
 if __name__ == '__main__':
     asia = TravianBot('https://ts30.x3.asia.travian.com', get_driver('Firefox_Profile2'))
-    asia.building({'2': [[10, 16]],
+    asia.building({'2': [[10, 16], [15, 33]],
                    '3': [[10, 21]]
                    })
-
-    #asia.building({'3': [[15, 11], [15, 10], [18, 11], [18, 10], [10, 19], [15, 26], [10, 33]] })
+    asia.building({'3': [[18, 11], [18, 10], [10, 19], [10, 26], [10, 33]]})
+    asia.building({'3': [[20, 11], [20, 10], [15, 26]]})
     asia.driver.quit()
