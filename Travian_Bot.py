@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 import time
 import os
 from dotenv import load_dotenv
-from selenium.common import NoSuchElementException
+from selenium.common import NoSuchElementException, WebDriverException
 from random import randint
 import threading
 from multiprocessing import Process
@@ -89,6 +89,7 @@ class TravianBot:
         except NoSuchElementException:
             return False
 
+
     def start_building(self, url, village_id):
         try:
             # Відкриваємо сторінку конкретної будівлі
@@ -98,14 +99,36 @@ class TravianBot:
             if 'scrollingContainer' in self.driver.page_source:
                 self.driver.find_element(By.CSS_SELECTOR, 'div.favorKey0').click()
                 time.sleep(2)
-            # Знаходимо кнопку "Побудувати" та клікаємо
-            clic_1 = self.driver.find_element(By.CLASS_NAME, 'section1')
-            clic_bild = clic_1.find_element(By.CSS_SELECTOR, '.textButtonV1.green.build')
-            time.sleep(2)
+            # Шукаємо назву та рівень будівлі
             title = self.driver.find_element(By.CSS_SELECTOR, '.titleInHeader').text
-            clic_bild.click()
-            time.sleep(2)
-            return title
+            # Спроба побудувати будівлю із відтворенням відео
+            try:
+                butt_video = self.driver.find_element(By.CLASS_NAME, 'section2')
+                clic_video = butt_video.find_element(By.CSS_SELECTOR, '.textButtonV1.green.videoFeatureButton.build')
+                time.sleep(1)
+                clic_video.click()
+                # Знаходимо iframe
+                iframe = WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.ID, 'videoArea')))
+
+                # Переходимо до iframe (відео плеєр)
+                self.driver.switch_to.frame(iframe)
+                # Нажимаємо кнопку play відео
+                play_button = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, '.atg-gima-big-play-button')))
+                play_button.click()
+                time.sleep(50)
+                # Повертаємося до основного контексту( виходимо з iframe)
+                self.driver.switch_to.default_content()
+                return title
+            except:
+                # Знаходимо кнопку "Побудувати" та клікаємо
+                clic_1 = self.driver.find_element(By.CLASS_NAME, 'section1')
+                clic_bild = clic_1.find_element(By.CSS_SELECTOR, '.textButtonV1.green.build')
+                time.sleep(2)
+                clic_bild.click()
+                time.sleep(2)
+                return title
 
         except NoSuchElementException:
             if self.check_login():
@@ -115,6 +138,7 @@ class TravianBot:
 
     def building(self, objects: dict[str: list[[int, int],]]): # {"name_village":[[max_level: int, build_gid: int],  ])
         self.driver.get(f'{self.domen_URL}/dorf1.php')
+        time.sleep(1)
         # Отримуємо список поселень
         self.check_villages()
         # Перевіряємо чи правильно вказанні назви поселень
@@ -131,20 +155,24 @@ class TravianBot:
                 times[name_village] = x
             time.sleep(3)
         while True:
-            print(times)
-            if len(times) == 0:
-                break
-            min_key = min(times, key=times.get)
-            min_time = times.pop(min_key)
-            sum_time = min_time + randint(3, 20)
-            time.sleep(sum_time)
-            for i in times:
-                times[i] = times[i] - sum_time
-            y = self.one_village(min_key, objects[min_key])
-            if y:
-                times[min_key] = y
-
-
+            # У випадку помилки драйвера, наприклад пропав інтернет очікує 5 хв
+            try:
+                print(times)
+                if len(times) == 0:
+                    break
+                min_key = min(times, key=times.get)
+                min_time = times.pop(min_key)
+                sum_time = min_time + randint(3, 20)
+                time.sleep(sum_time)
+                for i in times:
+                    times[i] = times[i] - sum_time
+                y = self.one_village(min_key, objects[min_key])
+                if y:
+                    times[min_key] = y
+            except WebDriverException as e:
+                print('Помилка з драйвером')
+                print(e)
+                time.sleep(300)
 
 
 
@@ -154,8 +182,10 @@ class TravianBot:
         village_id = self.villages[name_villag]
         main_page = f'{self.domen_URL}/dorf1.php'
         self.driver.get(f'{main_page}?newdid={village_id}&')
+        time.sleep(1)
         self.check_login()
         timer = self.time_to_complete_building()
+        time.sleep(1)
         if not timer:
             builds = {}
             for one_object in list_build:
@@ -171,6 +201,7 @@ class TravianBot:
                             self.driver.get(main_page)
                             WebDriverWait(self.driver, 10).until(
                                 EC.presence_of_element_located((By.CSS_SELECTOR, f'div.g{one_object[1]}')))
+                            time.sleep(3)
                         all_builds = self.driver.find_elements(By.CSS_SELECTOR, f'a.gid{one_object[1]}')
                         # Якщо рівень будівлі нижчий за вказаний користувачем добавляємо в лист будівництва
                         for i in all_builds:
@@ -193,6 +224,7 @@ class TravianBot:
                             self.driver.get(f'{self.domen_URL}/dorf2.php')
                             WebDriverWait(self.driver, 10).until(
                                 EC.presence_of_element_located((By.CSS_SELECTOR, f'div.g{one_object[1]}')))
+                            time.sleep(3)
                         all_builds = self.driver.find_element(By.CSS_SELECTOR, f'div.g{one_object[1]}')
                         el_b = all_builds.find_element(By.TAG_NAME, 'a')
                         # Якщо рівень будівлі нижчий за вказаний користувачем добавляємо в лист будівництва
@@ -230,6 +262,7 @@ class TravianBot:
                         # Якщо побудовано до рівня вказаного користувачем тоді видаляємо зі елемент зі словника
                         if int(title[-2:]) + 1 == builds[object_tag][0]:
                             builds.pop(object_tag)
+                            return False
                         break
 
             # Після проходж. списку будівництві, все ще не виконується будівн. значить невистачає ресурсів
@@ -248,8 +281,8 @@ class TravianBot:
 
 if __name__ == '__main__':
     asia = TravianBot('https://ts30.x3.asia.travian.com', get_driver('Firefox_Profile2'))
-    asia.building({'2': [[5, 16]],
-                   #'3': [[10, 21]]
+    asia.building({'2': [[10, 16]],
+                   '3': [[10, 21]]
                    })
 
     #asia.building({'3': [[15, 11], [15, 10], [18, 11], [18, 10], [10, 19], [15, 26], [10, 33]] })
