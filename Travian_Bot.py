@@ -1,3 +1,5 @@
+from selenium.webdriver.support import expected_conditions as EC
+
 from selenium.webdriver.common.by import By
 import time
 import os
@@ -9,6 +11,7 @@ from multiprocessing import Process
 
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support.wait import WebDriverWait
 
 
 def get_driver(browser_profile):
@@ -24,7 +27,7 @@ def get_driver(browser_profile):
     # -Де 'xxxxxxxx.default-release' яку потрібно скопіювати"""
 
     # Додаткова опція не відкривати графічне вікно браузера(робота у фоновому режимі, за бажанням)
-    options.add_argument('-headless')
+    #options.add_argument('-headless')
     return webdriver.Firefox(options=options)
 
 class TravianBot:
@@ -104,7 +107,7 @@ class TravianBot:
             time.sleep(2)
             return title
 
-        except:
+        except NoSuchElementException:
             if self.check_login():
                 print("Вхід виконано під час будування")
                 self.start_building(url, village_id)
@@ -133,11 +136,12 @@ class TravianBot:
                 break
             min_key = min(times, key=times.get)
             min_time = times.pop(min_key)
-            time.sleep(min_time + randint(3, 20))
+            sum_time = min_time + randint(3, 20)
+            time.sleep(sum_time)
             for i in times:
-                times[i] = times[i] - min_time
+                times[i] = times[i] - sum_time
             y = self.one_village(min_key, objects[min_key])
-            if x:
+            if y:
                 times[min_key] = y
 
 
@@ -155,23 +159,19 @@ class TravianBot:
         if not timer:
             builds = {}
             for one_object in list_build:
-                if one_object[1] < 5:
-                    resource = True
-                else:
-                    resource = False
                 # Шукаємо або ресурсне поле або в центрі будівлю
-                if resource:
+                if one_object[1] < 5:
                     try:
-                        # Якщо вказаний третій аргумент- Id то будуємо тільки одне ресурсне поле а не всі
+                        # Якщо вказаний третій аргумент- це пряме посилання на будівлю
                         if len(one_object) == 3:
-                            selector_str = f'a.buildingSlot{one_object[2]}'
-                        else:
-                            selector_str = f'a.gid{one_object[1]}'
+                            builds[one_object[2]] = [one_object[0], 0]
+
                         # Відкриваємо сторінку ресурсів тільки у випадку якщо поточній сторінці немає 'dorf1'
                         if 'dorf1' not in self.driver.current_url:
                             self.driver.get(main_page)
-                            time.sleep(2)
-                        all_builds = self.driver.find_elements(By.CSS_SELECTOR, selector_str)
+                            WebDriverWait(self.driver, 10).until(
+                                EC.presence_of_element_located((By.CSS_SELECTOR, f'div.g{one_object[1]}')))
+                        all_builds = self.driver.find_elements(By.CSS_SELECTOR, f'a.gid{one_object[1]}')
                         # Якщо рівень будівлі нижчий за вказаний користувачем добавляємо в лист будівництва
                         for i in all_builds:
                             if i.text != '':
@@ -179,22 +179,37 @@ class TravianBot:
                                     builds[i.get_attribute('href')] = [one_object[0], int(i.text), i.get_attribute("class")]
                             else:
                                 builds[i.get_attribute('href')] = [one_object[0], int(i.text), i.get_attribute("class")]
-                    except:
-                        print(village_id + ":Вказане помилкове id")
+                    except NoSuchElementException:
+                        print(village_id + ":Ресурсну будівлю не знайдено")
+                        # Якщо вказаний елемент не знайдено, перевіряє чи залогінено та повторює спробу ще раз
+                        self.check_login()
+                        for i in range(1):
+                            time.sleep(13)
+                            self.one_village(name_villag, list_build)
+
                 else:
-                    if 'dorf2' not in self.driver.current_url:
-                        self.driver.get(f'{self.domen_URL}/dorf2.php')
-                        time.sleep(2)
-                    all_builds = self.driver.find_element(By.CSS_SELECTOR, f'div.g{one_object[1]}')
-                    el_b = all_builds.find_element(By.TAG_NAME, 'a')
-                    # Якщо рівень будівлі нижчий за вказаний користувачем добавляємо в лист будівництва
-                    if int(el_b.text) < one_object[0]:
-                        # Як що задана будівля "Стіна" посилання добавляємо вручну
-                        if one_object[1] != 33:
-                            builds[el_b.get_attribute('href')] = [one_object[0], int(el_b.text), el_b.get_attribute("class")]
-                        else:
-                            url_el = 'https://ts30.x3.asia.travian.com/build.php?id=40&gid=33'
-                            builds[url_el] = [one_object[0], int(el_b.text), el_b.get_attribute("class")]
+                    try:
+                        if 'dorf2' not in self.driver.current_url:
+                            self.driver.get(f'{self.domen_URL}/dorf2.php')
+                            WebDriverWait(self.driver, 10).until(
+                                EC.presence_of_element_located((By.CSS_SELECTOR, f'div.g{one_object[1]}')))
+                        all_builds = self.driver.find_element(By.CSS_SELECTOR, f'div.g{one_object[1]}')
+                        el_b = all_builds.find_element(By.TAG_NAME, 'a')
+                        # Якщо рівень будівлі нижчий за вказаний користувачем добавляємо в лист будівництва
+                        if int(el_b.text) < one_object[0]:
+                            # Як що задана будівля "Стіна" посилання добавляємо вручну
+                            if one_object[1] != 33:
+                                builds[el_b.get_attribute('href')] = [one_object[0], int(el_b.text), el_b.get_attribute("class")]
+                            else:
+                                url_el = 'https://ts30.x3.asia.travian.com/build.php?id=40&gid=33'
+                                builds[url_el] = [one_object[0], int(el_b.text), el_b.get_attribute("class")]
+                    except NoSuchElementException:
+                        print(village_id + ":Будівлю в центрі не знайдено")
+                        # Якщо вказаний елемент не знайдено, перевіряє чи залогінено та повторює спробу ще раз
+                        self.check_login()
+                        for i in range(1):
+                            time.sleep(13)
+                            self.one_village(name_villag, list_build)
 
             # Перевірка чи завершені будівн. усіх будівель
             if len(builds) == 0:
@@ -229,10 +244,13 @@ class TravianBot:
 
 
 
+
+
 if __name__ == '__main__':
     asia = TravianBot('https://ts30.x3.asia.travian.com', get_driver('Firefox_Profile2'))
-    asia.building({'1': [[5, 9], [20, 11]],
-                   '2': [[10, 1], [10, 2], [18, 11], [18, 10]],
-                   '3': [[20, 11], [20, 10], [20, 22], [10, 16]],
+    asia.building({'2': [[5, 16]],
+                   #'3': [[10, 21]]
                    })
+
+    #asia.building({'3': [[15, 11], [15, 10], [18, 11], [18, 10], [10, 19], [15, 26], [10, 33]] })
     asia.driver.quit()
