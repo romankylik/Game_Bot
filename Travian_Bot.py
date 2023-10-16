@@ -170,10 +170,12 @@ class TravianBot:
                     # Виконуємо будівництво
                     y = self.one_village(min_key, objects[min_key])
                     delta_time = int(time.time() - start_time)
-                    print(f'Час на будівництво + randint(3, 20)= {delta_time} секунд')
                     # Віднімаємо пройдений час в обєктах які залишились
                     for i in times:
-                        times[i] = times[i] - delta_time
+                        if times[i] - delta_time > 1:
+                            times[i] = times[i] - delta_time
+                        else:
+                            times[i] = 1
                     if y:
                         times[min_key] = y
                 # Вихід з основного циклу for по закінченню програми, якщо не було жодних помилок
@@ -289,9 +291,9 @@ class TravianBot:
 
 if __name__ == '__main__':
     asia = TravianBot('https://ts30.x3.asia.travian.com', get_driver('Firefox_Profile2'))
-    asia.building({'2': [[10, 16], [15, 33]],
-                   '3': [[10, 21]]
+    asia.building({
+                   '3': [[17, 10], [15, 26]]
                    })
-    asia.building({'3': [[18, 11], [18, 10], [10, 19], [10, 26], [10, 33]]})
-    asia.building({'3': [[20, 11], [20, 10], [15, 26]]})
+    asia.building({'3': [[10, 19], [10, 33]]})
+    asia.building({'3': [[20, 11], [20, 10]]})
     asia.driver.quit()
