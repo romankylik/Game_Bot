@@ -137,53 +137,51 @@ class TravianBot:
 
 
     def building(self, objects: dict[str: list[[int, int],]]): # {"name_village":[[max_level: int, build_gid: int],  ])
+        sort_object = {}
         # У випадку помилки драйвера, наприклад пропав інтернет очікує 5 хв та повторює спробу тричі
         for i in range(3):
-            try:
-                self.driver.get(f'{self.domen_URL}/dorf1.php')
-                time.sleep(1)
-                # Отримуємо список поселень
-                self.check_villages()
-                # Перевіряємо чи правильно вказанні назви поселень
-                for name in objects.keys():
-                    if name not in self.villages:
-                        print(f"{self.villages}\n В списку вище не знайдено {name}.")
-                # Список потоків
 
-                # Запускаємо будування в кожному поселенні циклом
-                times = {}
+            self.driver.get(f'{self.domen_URL}/dorf1.php')
+            time.sleep(1)
+            # Отримуємо список поселень
+            self.check_villages()
+            # Перевіряємо чи правильно вказанні назви поселень
+            for name in objects.keys():
+                if name not in self.villages:
+                    print(f"{self.villages}\n В списку вище не знайдено {name}.")
+            # Список потоків
 
-                for name_village in objects:
-                    x = self.one_village(name_village, objects[name_village])
-                    if x:
-                        times[name_village] = x
-                    time.sleep(3)
-                while True:
-                    print(times)
-                    if len(times) == 0:
-                        break
-                    min_key = min(times, key=times.get)
-                    min_time = times.pop(min_key)
-                    # Запам'ятовуємо поточний час
-                    start_time = time.time()
-                    time.sleep(min_time + randint(3, 20))
-                    # Виконуємо будівництво
-                    y = self.one_village(min_key, objects[min_key])
-                    delta_time = int(time.time() - start_time)
-                    # Віднімаємо пройдений час в обєктах які залишились
-                    for i in times:
-                        if times[i] - delta_time > 1:
-                            times[i] = times[i] - delta_time
-                        else:
-                            times[i] = 1
-                    if y:
-                        times[min_key] = y
-                # Вихід з основного циклу for по закінченню програми, якщо не було жодних помилок
-                break
-            except WebDriverException as e:
-                print('Помилка з драйвером')
-                print(e)
-                time.sleep(300)
+            # Запускаємо будування в кожному поселенні циклом
+            times = {}
+
+            for name_village in objects:
+                x = self.one_village(name_village, objects[name_village])
+                if x:
+                    times[name_village] = x
+                time.sleep(3)
+            while True:
+                print(times)
+                if len(times) == 0:
+                    break
+                min_key = min(times, key=times.get)
+                min_time = times.pop(min_key)
+                # Запам'ятовуємо поточний час
+                start_time = time.time()
+                time.sleep(min_time + randint(3, 20))
+                # Виконуємо будівництво
+                y = self.one_village(min_key, objects[min_key])
+                delta_time = int(time.time() - start_time)
+                # Віднімаємо пройдений час в обєктах які залишились
+                for i in times:
+                    if times[i] - delta_time > 1:
+                        times[i] = times[i] - delta_time
+                    else:
+                        times[i] = 1
+                if y:
+                    times[min_key] = y
+            # Вихід з основного циклу for по закінченню програми, якщо не було жодних помилок
+            break
+
 
 
 
@@ -210,10 +208,10 @@ class TravianBot:
                         # Відкриваємо сторінку ресурсів тільки у випадку якщо поточній сторінці немає 'dorf1'
                         if 'dorf1' not in self.driver.current_url:
                             self.driver.get(main_page)
-                            WebDriverWait(self.driver, 10).until(
-                                EC.presence_of_element_located((By.CSS_SELECTOR, f'div.g{one_object[1]}')))
-                            time.sleep(3)
-                        all_builds = self.driver.find_elements(By.CSS_SELECTOR, f'a.gid{one_object[1]}')
+                        all_builds = WebDriverWait(self.driver, 20).until(
+                            EC.presence_of_all_elements_located((By.CSS_SELECTOR, f'a.gid{one_object[1]}')))
+                        time.sleep(3)
+
                         # Якщо рівень будівлі нижчий за вказаний користувачем добавляємо в лист будівництва
                         for i in all_builds:
                             if i.text != '':
@@ -233,10 +231,9 @@ class TravianBot:
                     try:
                         if 'dorf2' not in self.driver.current_url:
                             self.driver.get(f'{self.domen_URL}/dorf2.php')
-                            WebDriverWait(self.driver, 10).until(
-                                EC.presence_of_element_located((By.CSS_SELECTOR, f'div.g{one_object[1]}')))
-                            time.sleep(3)
-                        all_builds = self.driver.find_element(By.CSS_SELECTOR, f'div.g{one_object[1]}')
+                        all_builds = WebDriverWait(self.driver, 20).until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, f'div.g{one_object[1]}')))
+                        time.sleep(3)
                         el_b = all_builds.find_element(By.TAG_NAME, 'a')
                         # Якщо рівень будівлі нижчий за вказаний користувачем добавляємо в лист будівництва
                         if int(el_b.text) < one_object[0]:
@@ -261,7 +258,7 @@ class TravianBot:
 
             # Відсортуємо словник по рівню будівлі та зберігаємо списком
             list_el = sorted(builds.keys(), key=lambda k: builds[k][1])
-
+            #list_el = builds.keys()
             # Будування по списку ссилок builds
             for object_tag in list_el:
                 if "good" in builds[object_tag][2]:
@@ -291,9 +288,10 @@ class TravianBot:
 
 if __name__ == '__main__':
     asia = TravianBot('https://ts30.x3.asia.travian.com', get_driver('Firefox_Profile2'))
-    asia.building({
-                   '3': [[17, 10], [15, 26]]
+    asia.building({'1': [[15, 19], [15, 20]],
+                   '2': [[15, 19], [15, 20]],
+                   '3': [[10, 4], [15, 19]],
+                   '4': [[10, 25]]
                    })
-    asia.building({'3': [[10, 19], [10, 33]]})
-    asia.building({'3': [[20, 11], [20, 10]]})
+
     asia.driver.quit()
